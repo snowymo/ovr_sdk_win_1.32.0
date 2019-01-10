@@ -24,6 +24,25 @@ limitations under the License.
 
 #include "../Common/Win32_DirectXAppUtil.h" // DirectX
 #include "../Common/Win32_BasicVR.h"        // Basic VR
+#include <string>
+
+void printDouble(std::string name, double d)
+{
+	std::string str;
+	str = name + ":(" + std::to_string(d) + ")\n";
+	std::string stemp = std::string(str.begin(), str.end());
+	LPCSTR sw = stemp.c_str();
+	OutputDebugStringA(sw);
+}
+
+void printVector3(std::string name, ovrVector3f v)
+{
+	std::string str;
+	str = name + ":(" + std::to_string(v.x) + "," + std::to_string(v.y) + "," + std::to_string(v.z) + ")\n";
+	std::string stemp = std::string(str.begin(), str.end());
+	LPCSTR sw = stemp.c_str();
+	OutputDebugStringA(sw);
+}
 
 struct UsingBasicVR : BasicVR
 {
@@ -35,16 +54,29 @@ struct UsingBasicVR : BasicVR
 
 	    while (HandleMessages())
 	    {
-		    ActionFromInput();
-		    Layer[0]->GetEyePoses();
+			// Query the HMD for ts current tracking state.
+			ovrTrackingState ts = ovr_GetTrackingState(Session, ovr_GetTimeInSeconds(), ovrTrue);
+			if (ts.StatusFlags & (ovrStatus_OrientationTracked | ovrStatus_PositionTracked))
+			{
+				ovrPosef pose = ts.HeadPose.ThePose;
 
-		    for (int eye = 0; eye < 2; ++eye)
-		    {
-			    Layer[0]->RenderSceneToEyeBuffer(MainCam, RoomScene, eye);
-		    }
+				printDouble("time", ts.HeadPose.TimeInSeconds);
+				//printVector3("AngularVelocity", ts.HeadPose.AngularVelocity);
+				//printVector3("AngularAcceleration", ts.HeadPose.AngularAcceleration);
+				//printVector3("LinearVelocity", ts.HeadPose.LinearVelocity);
+				//printVector3("LinearAcceleration", ts.HeadPose.LinearAcceleration);
+			}
 
-		    Layer[0]->PrepareLayerHeader();
-		    DistortAndPresent(1);
+			ActionFromInput();
+			/*Layer[0]->GetEyePoses();
+
+			for (int eye = 0; eye < 2; ++eye)
+			{
+				Layer[0]->RenderSceneToEyeBuffer(MainCam, RoomScene, eye);
+			}
+
+			Layer[0]->PrepareLayerHeader();
+			DistortAndPresent(1);*/
 	    }
     }
 };

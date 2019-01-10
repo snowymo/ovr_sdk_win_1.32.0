@@ -32,6 +32,8 @@ limitations under the License.
 #include <chrono>         // std::chrono::seconds
 #include "Kernel/OVR_Log.h"
 
+#include <iostream>
+
 
 // Use WaitFrame/BeginFrame/EndFrame in place of SubmitFrame
 #define USE_WAITFRAME 1
@@ -565,6 +567,24 @@ void OculusWorldDemoApp::DestroyRendering()
     HmdDisplayAcquired = false;
 }
 
+void OculusWorldDemoApp::printDouble(std::string name, double d)
+{
+	std::string str;
+	str = name + ":(" + std::to_string(d) + ")\n";
+	std::wstring stemp = std::wstring(str.begin(), str.end());
+	LPCWSTR sw = stemp.c_str();
+	OutputDebugString(sw);
+}
+
+void OculusWorldDemoApp::printVector3(std::string name, ovrVector3f v)
+{
+	std::string str;
+	str = name + ":(" + std::to_string(v.x) + "," + std::to_string(v.y) + "," + std::to_string(v.z) + ")\n";
+	std::wstring stemp = std::wstring(str.begin(), str.end());
+	LPCWSTR sw = stemp.c_str();
+	OutputDebugString(sw);
+}
+
 static void OVR_CDECL LogCallback(uintptr_t /*userData*/, int /*level*/, const char* message)
 {
     WriteLog(message);
@@ -692,7 +712,6 @@ int OculusWorldDemoApp::InitializeRendering(bool firstTime)
     // Did we end up with a debug HMD?
     HmdDesc = ovr_GetHmdDesc(Session);
     UsingDebugHmd = (HmdDesc.DefaultHmdCaps & ovrHmdCap_DebugDevice) != 0;
-
 
     // In Direct App-rendered mode, we can use smaller window size,
     // as it can have its own contents and isn't tied to the buffer.
@@ -2497,6 +2516,20 @@ void OculusWorldDemoApp::OnIdle()
     {
         ResetHmdPose();
     }
+
+	// zhenyi
+	// Query the HMD for ts current tracking state.
+	ovrTrackingState ts = ovr_GetTrackingState(Session, ovr_GetTimeInSeconds(), ovrTrue);
+	if (ts.StatusFlags & (ovrStatus_OrientationTracked | ovrStatus_PositionTracked))
+	{
+		ovrPosef pose = ts.HeadPose.ThePose;
+
+		printDouble("time", ts.HeadPose.TimeInSeconds);
+		printVector3("AngularVelocity", ts.HeadPose.AngularVelocity);
+		printVector3("AngularAcceleration", ts.HeadPose.AngularAcceleration);
+		printVector3("LinearVelocity", ts.HeadPose.LinearVelocity);
+		printVector3("LinearAcceleration", ts.HeadPose.LinearAcceleration);
+	}
 
     if (!HmdDisplayAcquired)
     {
